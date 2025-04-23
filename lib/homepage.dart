@@ -1,14 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-//import 'package:firebase_core/firebase_core.dart';
+// Import แพ็กเกจต่าง ๆ ที่ใช้ในแอป
+import 'package:cloud_firestore/cloud_firestore.dart'; // ใช้งาน Firestore
+import 'package:firebase_auth/firebase_auth.dart'; // ใช้งาน Firebase Authentication
 import 'package:flutter/material.dart';
-//import 'package:get/route_manager.dart';
-import 'package:intl/intl.dart'; 
-import 'package:social_media_app/component/Text_field.dart';
-import 'package:social_media_app/component/Y_post.dart';
-import 'package:social_media_app/component/drawer.dart';
-import 'package:social_media_app/profile_page.dart';
+import 'package:intl/intl.dart'; // ใช้จัดรูปแบบวันที่และเวลา
+import 'package:social_media_app/component/Text_field.dart'; // ฟอร์มกรอกข้อความ
+import 'package:social_media_app/component/Y_post.dart'; // Widget โพสต์
+import 'package:social_media_app/component/drawer.dart'; // เมนู Drawer
+import 'package:social_media_app/profile_page.dart'; // หน้าโปรไฟล์
 
+// สร้าง StatefulWidget สำหรับหน้าแรกของแอป
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
 
@@ -17,43 +17,44 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  final user = FirebaseAuth.instance.currentUser;
-  final textcontroller = TextEditingController();
+  final user = FirebaseAuth.instance.currentUser; // ผู้ใช้ที่ล็อกอินอยู่
+  final textcontroller = TextEditingController(); // ควบคุมช่องกรอกข้อความ
 
-  // sign out method
+  // เมธอดออกจากระบบ
   void signout() async {
     await FirebaseAuth.instance.signOut();
   }
 
-  // post method
+  // เมธอดโพสต์ข้อความ
   void postMessage() {
     if (textcontroller.text.isNotEmpty) {
       FirebaseFirestore.instance.collection("User post").add({
-        'UserEmail': user!.email,
-        'Message': textcontroller.text,
-        'TimeStamp': Timestamp.now(),
-        'Likes':[]
+        'UserEmail': user!.email, // อีเมลของผู้โพสต์
+        'Message': textcontroller.text, // ข้อความ
+        'TimeStamp': Timestamp.now(), // เวลาที่โพสต์
+        'Likes': [] // เริ่มต้นไลก์เป็น array ว่าง
       });
     }
+
+    // ล้างช่องข้อความหลังโพสต์
     setState(() {
       textcontroller.clear();
     });
   }
 
-  //navication pro
-  void GotoprofilePage(){
-    //popmeun
-    Navigator.pop(context);
-     //go to profile user
-     Navigator.push(context,MaterialPageRoute(builder:(context)=> const ProfilePage(),));
+  // เมธอดนำทางไปยังหน้าโปรไฟล์
+  void GotoprofilePage() {
+    Navigator.pop(context); // ปิด Drawer ก่อน
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ProfilePage()),
+    );
   }
- 
-  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.yellow[300],
+      backgroundColor: Colors.yellow[300], // พื้นหลังสีเหลือง
       appBar: AppBar(
         title: Center(
           child: Text(
@@ -65,26 +66,28 @@ class _HomepageState extends State<Homepage> {
         backgroundColor: Colors.black,
         actions: [
           IconButton(
-            onPressed: GotoprofilePage,
+            onPressed: GotoprofilePage, // ปุ่มไปหน้าโปรไฟล์
             icon: Icon(Icons.person),
           )
         ],
       ),
-      drawer: MyDrawer(
-       onProfileTap: GotoprofilePage,
-       onsignOut:signout,
 
+      // Drawer เมนูด้านซ้าย
+      drawer: MyDrawer(
+        onProfileTap: GotoprofilePage, // ไปหน้าโปรไฟล์
+        onsignOut: signout, // ออกจากระบบ
       ),
+
       body: Center(
         child: Column(
           children: [
-            // Y app
+            // โซนแสดงโพสต์ทั้งหมด
             Expanded(
               child: StreamBuilder(
                 stream: FirebaseFirestore.instance
                     .collection("User post")
                     .orderBy("TimeStamp", descending: false)
-                    .snapshots(),
+                    .snapshots(), // ดึงโพสต์เรียงตามเวลา
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return ListView.builder(
@@ -99,9 +102,9 @@ class _HomepageState extends State<Homepage> {
                         return YPost(
                           message: post['Message'],
                           user: post['UserEmail'],
-                          time: formattedTime, // ✅ แก้ตรงนี้
+                          time: formattedTime,
                           postID: post.id,
-                          likes: List<String>.from(post['Likes']??[]),
+                          likes: List<String>.from(post['Likes'] ?? []),
                         );
                       },
                     );
@@ -117,13 +120,12 @@ class _HomepageState extends State<Homepage> {
               ),
             ),
 
-
-
-            // post
+            // โซนกรอกและโพสต์ข้อความ
             Padding(
               padding: const EdgeInsets.all(25.0),
               child: Row(
                 children: [
+                  // ช่องกรอกข้อความ
                   Expanded(
                     child: MyTextfield(
                       controller: textcontroller,
@@ -131,18 +133,23 @@ class _HomepageState extends State<Homepage> {
                       obscureText: false,
                     ),
                   ),
+
+                  // ปุ่มโพสต์ข้อความ
                   IconButton(
-                      onPressed: postMessage,
-                      icon: const Icon(Icons.arrow_circle_up))
+                    onPressed: postMessage,
+                    icon: const Icon(Icons.arrow_circle_up),
+                  )
                 ],
               ),
             ),
 
-            // Text
-            Text('Login as: ${user!.email}',style: TextStyle(color: Colors.black),),
-            const SizedBox(
-              height: 50,
-            )
+            // แสดงอีเมลผู้ใช้งาน
+            Text(
+              'Login as: ${user!.email}',
+              style: TextStyle(color: Colors.black),
+            ),
+
+            const SizedBox(height: 50),
           ],
         ),
       ),

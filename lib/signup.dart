@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:social_media_app/warpper.dart';
 
+/// หน้าลงทะเบียนผู้ใช้ใหม่
 class Signup extends StatefulWidget {
   const Signup({super.key});
 
@@ -12,17 +13,24 @@ class Signup extends StatefulWidget {
 }
 
 class _SignupState extends State<Signup> {
+  // ตัวควบคุมการกรอกข้อมูล
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
   final TextEditingController confirmPassword = TextEditingController();
 
-  final _formKey = GlobalKey<FormState>();
-  bool isLoading = false;
+  final _formKey = GlobalKey<FormState>(); // ใช้สำหรับตรวจสอบฟอร์ม
+  bool isLoading = false; // ใช้แสดง loading ระหว่างสมัครสมาชิก
 
+  // ฟังก์ชันสมัครสมาชิก
   void signup() async {
+    // ตรวจสอบว่ารหัสผ่านตรงกันหรือไม่
     if (password.text != confirmPassword.text) {
-      Get.snackbar("Password mismatch", "Both passwords must be the same",
-          backgroundColor: Colors.black, colorText: Colors.yellow);
+      Get.snackbar(
+        "Password mismatch",
+        "Both passwords must be the same",
+        backgroundColor: Colors.black,
+        colorText: Colors.yellow,
+      );
       return;
     }
 
@@ -31,22 +39,30 @@ class _SignupState extends State<Signup> {
     });
 
     try {
+      // สร้างบัญชีใหม่ใน Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
               email: email.text.trim(), password: password.text.trim());
 
+      // บันทึกข้อมูลผู้ใช้เพิ่มเติมลงใน Firestore
       await FirebaseFirestore.instance
           .collection("Users")
           .doc(userCredential.user!.email)
           .set({
-        'username': email.text.split('@')[0],
-        'bio': 'Empty bio',
+        'username': email.text.split('@')[0], // สร้าง username จากอีเมล
+        'bio': 'Empty bio', // ตั้ง bio เริ่มต้น
       });
 
+      // พาไปหน้า Warpper เพื่อตรวจสอบ login และ redirect
       Get.offAll(Warpper());
     } on FirebaseAuthException catch (e) {
-      Get.snackbar("Signup Error", e.message ?? "Unknown error",
-          backgroundColor: Colors.black, colorText: Colors.redAccent);
+      // แสดง error ถ้ามีปัญหาการสมัคร
+      Get.snackbar(
+        "Signup Error",
+        e.message ?? "Unknown error",
+        backgroundColor: Colors.black,
+        colorText: Colors.redAccent,
+      );
     } finally {
       setState(() {
         isLoading = false;
@@ -70,7 +86,7 @@ class _SignupState extends State<Signup> {
           key: _formKey,
           child: Column(
             children: [
-              // Email
+              // ช่องกรอกอีเมล
               TextFormField(
                 controller: email,
                 style: const TextStyle(color: Colors.white),
@@ -86,7 +102,7 @@ class _SignupState extends State<Signup> {
               ),
               const SizedBox(height: 15),
 
-              // Password
+              // ช่องกรอกรหัสผ่าน
               TextFormField(
                 controller: password,
                 obscureText: true,
@@ -103,7 +119,7 @@ class _SignupState extends State<Signup> {
               ),
               const SizedBox(height: 15),
 
-              // Confirm Password
+              // ช่องยืนยันรหัสผ่าน
               TextFormField(
                 controller: confirmPassword,
                 obscureText: true,
@@ -120,11 +136,11 @@ class _SignupState extends State<Signup> {
               ),
               const SizedBox(height: 25),
 
-              // Button
+              // ปุ่มสมัครสมาชิก
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : signup,
+                  onPressed: isLoading ? null : signup, // ปิดปุ่มถ้า loading อยู่
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.yellow[700],
                     foregroundColor: Colors.black,
@@ -132,9 +148,7 @@ class _SignupState extends State<Signup> {
                     textStyle: const TextStyle(fontSize: 16),
                   ),
                   child: isLoading
-                      ? const CircularProgressIndicator(
-                          color: Colors.black,
-                        )
+                      ? const CircularProgressIndicator(color: Colors.black)
                       : const Text("Sign Up"),
                 ),
               )

@@ -12,7 +12,7 @@ void main() async{
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  // เป็นแค่ตัวรันแอปทัง หมดจาก   Warpper
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
